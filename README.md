@@ -27,10 +27,10 @@ python3 install.py --link                 # symlink, so `git pull` updates it
 python3 install.py --zip                  # dist/<skill>.zip, for uploading to a chat app
 ```
 
-**npx `skills`:**
+**`npx skills`:**
 
 ```bash
-npx skills add ThaminduMiuranda/agent-skills --skill harness-comms
+npx skills add ThaminduMiuranda/agent-skills --skill <skill>   # leave out --skill to choose from a list
 ```
 
 **Without cloning** (set `DEST` to your harness's skills folder):
