@@ -9,7 +9,7 @@
 <rect width="1280" height="320" rx="16" fill="url(#grid)" mask="url(#gridmask)"/>
 <rect x="72" y="72" width="44" height="4" rx="2" fill="#d97757"/>
 <text x="70" y="146" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="64" font-weight="700" letter-spacing="-1.5" fill="#f0f3f6">agent-skills</text>
-<text x="72" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="22" fill="#9aa4b2">Agent Skills that work in any harness. Install one, or all.</text>
+<text x="72" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="22" fill="#9aa4b2">Agent Skills that work in any harness.</text>
 <rect x="72" y="226" width="186" height="30" rx="15" fill="#1a2230" stroke="#2b3545"/><text x="165" y="246" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" fill="#c9d1d9">open SKILL.md format</text>
 <rect x="268.0" y="226" width="177" height="30" rx="15" fill="#1a2230" stroke="#2b3545"/><text x="357" y="246" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" fill="#c9d1d9">one-command install</text>
 <rect x="455.4" y="226" width="212" height="30" rx="15" fill="#1a2230" stroke="#2b3545"/><text x="561" y="246" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" fill="#c9d1d9">Linux · macOS · Windows</text>
