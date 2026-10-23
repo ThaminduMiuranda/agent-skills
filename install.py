@@ -5,7 +5,7 @@
   python3 install.py --target claude-code     # one harness (repeatable)
   python3 install.py --project .              # into the current project instead of your home folder
   python3 install.py --skill harness-comms --link   # symlink, so `git pull` updates it
-  python3 install.py --zip                    # dist/<skill>.zip for claude.ai upload
+  python3 install.py --zip                    # dist/<skill>.zip to upload to a chat app
 
 Works on Linux, macOS and Windows (Python 3.9+, standard library only).
 """
@@ -81,7 +81,8 @@ def main():
     chosen = [SKILLS / s for s in (args.skill or skills)]
     if args.zip:
         for src in chosen:
-            print(f"built {build_zip(src, REPO / 'dist')}  (claude.ai -> Settings -> Capabilities -> Skills)")
+            print(f"built {build_zip(src, REPO / 'dist')}  (upload it wherever your chat app takes skills, "
+                  "e.g. claude.ai -> Settings -> Capabilities -> Skills)")
         return 0
 
     if args.target and "all" in args.target:
