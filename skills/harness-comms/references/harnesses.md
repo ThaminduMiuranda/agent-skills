@@ -8,9 +8,9 @@
 | `claude-code` | Claude Code | `.claude/skills/check-comms/` | `CLAUDE.md` | `/check-comms` |
 | `antigravity` | Antigravity | `.agents/skills/check-comms/` | `AGENTS.md` | say "check comms" |
 | `codex` | Codex CLI | `.agents/skills/check-comms/` | `AGENTS.md` | `$check-comms` or say "check comms" |
-| `gemini-cli` | Gemini CLI | `.gemini/skills/check-comms/` | `GEMINI.md` | say "check comms" |
+| `gemini-cli` | Gemini CLI (enterprise or API key only; personal accounts ended 2026-06-18, so use `antigravity` for `agy`) | `.gemini/skills/check-comms/` | `GEMINI.md` | say "check comms" |
 | `opencode` | OpenCode | `.opencode/skills/check-comms/` | `AGENTS.md` | say "check comms" |
-| `generic` | any other agent that reads `AGENTS.md` | `.agents/skills/check-comms/` | `AGENTS.md` | say "check comms" |
+| `generic` | any other agent that reads `AGENTS.md` (for example Grok Build) | `.agents/skills/check-comms/` | `AGENTS.md` | say "check comms" |
 
 When two parties share a skills folder (for example Antigravity and Codex both use `.agents/skills`),
 each skill is named `check-comms-<party>`, and the shared instruction file tells each harness which
@@ -22,8 +22,9 @@ line, so `sync` leaves your copy alone.
 
 ## How claude.ai chat joins
 
-claude.ai runs in the cloud. It reaches the project only through a link to the user's computer:
-Claude Desktop's filesystem access, or the claude.ai device link. Through that link it can list, read
+claude.ai runs in the cloud. It reaches the project only through the Claude desktop app (macOS,
+Windows), using either the Filesystem extension in chat or Cowork's connected folders. Web and mobile
+sessions reach local files only through a running desktop app. Through that link it can list, read
 and write files. It should not be expected to move files or run scripts. That is why it is the gated
 party:
 

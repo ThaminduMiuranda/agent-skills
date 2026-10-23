@@ -12,7 +12,7 @@ Claude Code, Antigravity, Codex, Gemini CLI and a claude.ai chat can all work on
 but they cannot message each other. `harness-comms` gives them a shared mailbox inside the project:
 
 ```
-            claude.ai chat  (reaches your computer through Claude Desktop / device link)
+            claude.ai chat  (reaches your files through the Claude desktop app)
                   │  reads its inbox, flips acknowledged: true, writes new files
                   ▼
  ┌──────────────── project/comms/ ────────────────┐
@@ -38,6 +38,30 @@ A single command generates:
 Messages to the chat are archived only after the chat has acknowledged reading them, and each agent
 archives only its own inbox, so nobody's unread mail disappears. The skill can also add a harness
 later, re-generate everything from `comms/config.json`, and audit headers and inbox state.
+
+#### Which chat apps can join
+
+A party only has to **read and write files in the project folder**. It does not need to move them or
+run scripts, which is why the chat is the gated party. Coding agents (Claude Code, Codex, Antigravity,
+Grok Build, ...) run on your machine and always qualify. Chat apps vary, as of October 2026:
+
+| Chat app | Reads/writes a local folder? | In this pipeline |
+|---|---|---|
+| **Claude**, desktop app (macOS, Windows) | Yes. In chat via the Filesystem extension (Settings → Extensions); in Cowork via connected folders. | Supported: the `chat` party with the generated claude.ai skill |
+| **Claude** on web or mobile | Only through the desktop app: Cowork sessions started on desktop (or scheduled) reach local files while the app is open on that computer | Works only with the desktop app running |
+| **ChatGPT**, desktop app (Work) | Yes, if your plan and workspace allow it and you grant each folder. Web and mobile can't. | Untested; Codex (local) joins as `codex` |
+| **Gemini**, Mac app (Spark) | Yes, for "Connected folders" (beta: US, Google AI Ultra). Windows app and web can't. | Untested; Antigravity (local) joins as `antigravity` |
+| **Grok Bot** | No. It works in an xAI cloud computer, not on your machine. | Can't join; Grok Build (local CLI) joins as `generic` |
+
+Notes:
+- **Local access still means cloud processing.** Whatever a chat app reads from a connected folder is
+  sent to that provider's models. Connect the project folder only, not your home folder.
+- **Claude's Cowork runs code in the cloud**, in an isolated environment on Anthropic's servers. It
+  reads and writes your connected folders but does not execute against your machine. In this
+  pipeline, any code runs in the local agents.
+- **Gemini CLI no longer serves personal accounts.** That ended on 18 June 2026 for free, AI Pro and AI
+  Ultra; enterprise and API-key users keep it. Personal users should add `antigravity` (Antigravity
+  CLI, `agy`) instead of `gemini`.
 
 ## Install
 
@@ -79,19 +103,25 @@ mkdir -p "$DEST" && curl -sL https://github.com/ThaminduMiuranda/agent-skills/ar
 |---|---|
 | Claude Code | `~/.claude/skills/` |
 | Codex, OpenCode, other `AGENTS.md` agents | `~/.agents/skills/` |
-| Gemini CLI | `~/.gemini/skills/` |
-| Antigravity | `~/.gemini/config/skills/` |
+| Antigravity (IDE and `agy` CLI) | `~/.gemini/config/skills/` |
+| Gemini CLI (enterprise / API key) | `~/.gemini/skills/` |
+| anything else | wherever it loads `SKILL.md` folders from |
 
-**claude.ai** does not need `harness-comms` itself. The script has to run on the machine that holds
-the project. Once a local agent has set the project up, upload the project's own chat skill,
-`comms/_chat/check-comms-<project>.zip`, under claude.ai → Settings → Capabilities → Skills, and
-follow `comms/_chat/README.md`. To upload `harness-comms` to claude.ai anyway (for example, so chat
-can read the protocol), `python3 install.py --zip` builds `dist/harness-comms.zip`.
+If an older skill with the same name is already installed at user level, some harnesses load that
+one instead of a newer project-level copy. Replace it with `install.py --force`.
+
+**Chat apps** do not need `harness-comms` installed. The script has to run on the machine that holds
+the project, so a local agent sets the project up. For the claude.ai chat, upload the project's own
+chat skill, `comms/_chat/check-comms-<project>.zip`, under claude.ai → Settings → Capabilities →
+Skills, and follow `comms/_chat/README.md`. To upload `harness-comms` itself to a chat app (for
+example, so it can read the protocol), `python3 install.py --zip` builds `dist/harness-comms.zip`.
 
 ## Quick start (what your agent runs)
 
+`<skills-dir>` is wherever the skill was installed:
+
 ```bash
-python3 ~/.claude/skills/harness-comms/scripts/harness_comms.py init \
+python3 <skills-dir>/harness-comms/scripts/harness_comms.py init \
   --project-root . --parties "chat:claude-ai,code:claude-code,antigravity" --dry-run
 ```
 
