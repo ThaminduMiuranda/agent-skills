@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-label="agent-skills: Agent Skills that work in any harness">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f4f6f9"/></linearGradient>
+  <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#e6eaf0" stroke-width="1"/></pattern>
+  <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0"><stop offset="0.45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>
+  <mask id="gridmask"><rect width="1280" height="320" fill="url(#fade)"/></mask>
+</defs>
+<rect x="0.5" y="0.5" width="1279" height="319" rx="16" fill="url(#bg)" stroke="#d5dbe3"/>
+<rect width="1280" height="320" rx="16" fill="url(#grid)" mask="url(#gridmask)"/>
+<rect x="72" y="72" width="44" height="4" rx="2" fill="#c8643f"/>
+<text x="70" y="146" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="64" font-weight="700" letter-spacing="-1.5" fill="#0f172a">agent-skills</text>
+<text x="72" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="22" fill="#4b5565">Agent Skills that work in any harness. Install one, or all.</text>
+<rect x="72" y="226" width="186" height="30" rx="15" fill="#ffffff" stroke="#d5dbe3"/><text x="165" y="246" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" fill="#334155">open SKILL.md format</text>
+<rect x="268.0" y="226" width="177" height="30" rx="15" fill="#ffffff" stroke="#d5dbe3"/><text x="357" y="246" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" fill="#334155">one-command install</text>
+<rect x="455.4" y="226" width="212" height="30" rx="15" fill="#ffffff" stroke="#d5dbe3"/><text x="561" y="246" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" fill="#334155">Linux · macOS · Windows</text>
+<rect x="677.1999999999999" y="226" width="40" height="30" rx="15" fill="#ffffff" stroke="#d5dbe3"/><text x="697" y="246" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" fill="#334155">MIT</text>
+<path d="M918 70 C942 70 942 132 966 132" fill="none" stroke="#b9c4d2" stroke-width="2" stroke-dasharray="5 6"/>
+<circle cx="966" cy="132" r="4" fill="#2f8f8f"/>
+<path d="M1154 70 C1124 70 1124 132 1094 132" fill="none" stroke="#b9c4d2" stroke-width="2" stroke-dasharray="5 6"/>
+<circle cx="1094" cy="132" r="4" fill="#2f8f8f"/>
+<path d="M914 250 C940 250 940 188 966 188" fill="none" stroke="#b9c4d2" stroke-width="2" stroke-dasharray="5 6"/>
+<circle cx="966" cy="188" r="4" fill="#2f8f8f"/>
+<path d="M1146 250 C1120 250 1120 188 1094 188" fill="none" stroke="#b9c4d2" stroke-width="2" stroke-dasharray="5 6"/>
+<circle cx="1094" cy="188" r="4" fill="#2f8f8f"/>
+<rect x="786" y="52" width="132" height="36" rx="10" fill="#ffffff" stroke="#c9d2de"/><circle cx="802" cy="70" r="4" fill="#2f8f8f"/><text x="859" y="75" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e293b">Claude Code</text>
+<rect x="1154" y="52" width="96" height="36" rx="10" fill="#ffffff" stroke="#c9d2de"/><circle cx="1170" cy="70" r="4" fill="#2f8f8f"/><text x="1209" y="75" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e293b">Codex</text>
+<rect x="790" y="232" width="124" height="36" rx="10" fill="#ffffff" stroke="#c9d2de"/><circle cx="806" cy="250" r="4" fill="#2f8f8f"/><text x="859" y="255" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e293b">Antigravity</text>
+<rect x="1146" y="232" width="112" height="36" rx="10" fill="#ffffff" stroke="#c9d2de"/><circle cx="1162" cy="250" r="4" fill="#2f8f8f"/><text x="1209" y="255" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e293b">claude.ai</text>
+<rect x="966" y="96" width="128" height="128" rx="20" fill="#fff7f3" stroke="#c8643f" stroke-width="2"/>
+<path d="M1010 120h28l14 14v40a4 4 0 0 1-4 4h-38a4 4 0 0 1-4-4v-50a4 4 0 0 1 4-4z" fill="none" stroke="#c8643f" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M1038 120v14h14" fill="none" stroke="#c8643f" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M1016 146h22M1016 156h26M1016 166h16" stroke="#c8643f" stroke-width="2.5" stroke-linecap="round"/>
+<text x="1030" y="202" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="15" font-weight="600" fill="#0f172a">SKILL.md</text>
+</svg>

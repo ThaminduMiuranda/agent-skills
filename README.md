@@ -1,4 +1,7 @@
-# agent-skills
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg">
+  <img alt="agent-skills: Agent Skills that work in any harness" src="docs/assets/banner-light.svg" width="100%">
+</picture>
 
 Agent Skills that work in any harness: Claude Code, Codex, Antigravity, Gemini CLI, OpenCode, or
 anything else that loads `SKILL.md` folders. Each skill lives in `skills/<name>/` and installs on its
