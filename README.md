@@ -7,8 +7,8 @@ installs stay lean.
 
 ## Skills
 
-| Skill | What it does | Docs |
-|---|---|---|
+| Skill                                    | What it does                                                                                                            | Docs                                           |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | [`harness-comms`](skills/harness-comms/) | Lets a claude.ai chat and local coding agents work together on one project through a shared file-based `comms/` mailbox | [docs/harness-comms.md](docs/harness-comms.md) |
 
 ## Install
@@ -27,7 +27,11 @@ python3 install.py --link                 # symlink, so `git pull` updates it
 python3 install.py --zip                  # dist/<skill>.zip, for uploading to a chat app
 ```
 
-**`npx skills`:** `npx skills add ThaminduMiuranda/agent-skills --skill <skill>`
+**npx `skills`:**
+
+```bash
+npx skills add ThaminduMiuranda/agent-skills --skill harness-comms
+```
 
 **Without cloning** (set `DEST` to your harness's skills folder):
 
@@ -40,13 +44,13 @@ mkdir -p "$DEST" && curl -sL https://github.com/ThaminduMiuranda/agent-skills/ar
 **Or ask your agent:** "Install the `<skill>` skill from https://github.com/ThaminduMiuranda/agent-skills
 (only its `skills/<skill>/` folder) wherever you load skills from."
 
-| Harness | User-level skills folder |
-|---|---|
-| Claude Code | `~/.claude/skills/` |
-| Codex, OpenCode, other `AGENTS.md` agents | `~/.agents/skills/` |
-| Antigravity (IDE and `agy` CLI) | `~/.gemini/config/skills/` |
-| Gemini CLI (enterprise / API key) | `~/.gemini/skills/` |
-| anything else | wherever it loads `SKILL.md` folders from |
+| Harness                                   | User-level skills folder                  |
+| ----------------------------------------- | ----------------------------------------- |
+| Claude Code                               | `~/.claude/skills/`                       |
+| Codex, OpenCode, other `AGENTS.md` agents | `~/.agents/skills/`                       |
+| Antigravity (IDE and `agy` CLI)           | `~/.gemini/config/skills/`                |
+| Gemini CLI (enterprise / API key)         | `~/.gemini/skills/`                       |
+| anything else                             | wherever it loads `SKILL.md` folders from |
 
 If an older skill with the same name is installed at user level, some harnesses load that copy in
 preference to a newer project-level one. Replace it with `install.py --force`.
