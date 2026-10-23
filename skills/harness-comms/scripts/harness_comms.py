@@ -42,7 +42,7 @@ HARNESSES = {
         "title": "Claude chat (claude.ai)",
         "skills": None,
         "instructions": None,
-        "reach": "through its link to this computer (Claude Desktop filesystem access or the claude.ai device link)",
+        "reach": "through Claude's Local devices link to this computer (the Claude app running here)",
         "good_for": "discussing results with the human; planning what to ask next; reading reports",
         "not_for": "running code or long jobs; moving or archiving files",
     },
@@ -448,15 +448,15 @@ description: Check the {hc["project"]} comms/ folder on the user's computer ({co
 ---
 
 You are party **`{party}`** in the `comms/` channel of the **{hc["project"]}** project, shared with
-{", ".join(f"`{p}`" for p in others)}. You reach it through your link to the user's computer (Claude
-Desktop filesystem access or the claude.ai device link). All paths below are absolute.
+{", ".join(f"`{p}`" for p in others)}. You reach it through the user's computer, linked to Claude as
+a local device (the Claude app running on it). All paths below are absolute.
 
 - Folder: `{comms}/`
 - Your inbox: `{comms}/to_{party}/`
 - Full protocol: `{comms}/README.md` (read it once per conversation before writing anything)
 
-If you cannot see the folder, tell the user that this chat has no file access to their computer yet
-and stop; do not invent its contents.
+If you cannot see the folder, stop and tell the user. The Claude app must be running on that
+computer, and the computer must show up under Local devices. Do not invent the folder's contents.
 
 ## Check in
 
@@ -512,8 +512,10 @@ def render_chat_instructions(cfg, party, root):
     return f"""{MD_MARK}
 # Joining claude.ai chat to the {hc["project"]} comms/ channel
 
-1. **Give the chat file access to this computer** (Claude Desktop with filesystem access, or the
-   claude.ai device link) covering `{root.as_posix()}`.
+1. **Keep the Claude app running on this computer** (macOS, Windows, or the Linux beta) and check
+   that it is listed under Local devices. Chats on claude.ai (web, desktop or mobile) then reach
+   `{root.as_posix()}` through it. You don't need an extension for this; Claude's Filesystem
+   extension in the desktop app is an alternative route.
 2. **Upload the skill**: claude.ai → Settings → Capabilities → Skills → Upload skill →
    `{CHAT_DIR}/{chat_skill_name(cfg, party)}.zip`. Re-upload it after every `sync` that changes it.
 3. **Paste this into the claude.ai project's instructions** (Project → Instructions):

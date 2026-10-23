@@ -12,7 +12,7 @@ Claude Code, Antigravity, Codex, Gemini CLI and a claude.ai chat can all work on
 but they cannot message each other. `harness-comms` gives them a shared mailbox inside the project:
 
 ```
-            claude.ai chat  (reaches your files through the Claude desktop app)
+            claude.ai chat  (reaches your files via Local devices: the Claude app on your PC)
                   │  reads its inbox, flips acknowledged: true, writes new files
                   ▼
  ┌──────────────── project/comms/ ────────────────┐
@@ -47,8 +47,7 @@ Grok Build, ...) run on your machine and always qualify. Chat apps vary, as of O
 
 | Chat app | Reads/writes a local folder? | In this pipeline |
 |---|---|---|
-| **Claude**, desktop app (macOS, Windows) | Yes. In chat via the Filesystem extension (Settings → Extensions); in Cowork via connected folders. | Supported: the `chat` party with the generated claude.ai skill |
-| **Claude** on web or mobile | Only through the desktop app: Cowork sessions started on desktop (or scheduled) reach local files while the app is open on that computer | Works only with the desktop app running |
+| **Claude** (web, desktop app, mobile) | Yes, through **Local devices**: while the Claude app runs on your computer (macOS, Windows, Linux beta), chats can run tasks with its local files, browser and local MCPs. No extension needed. | Supported: the `chat` party, with the generated claude.ai skill (tested) |
 | **ChatGPT**, desktop app (Work) | Yes, if your plan and workspace allow it and you grant each folder. Web and mobile can't. | Untested; Codex (local) joins as `codex` |
 | **Gemini**, Mac app (Spark) | Yes, for "Connected folders" (beta: US, Google AI Ultra). Windows app and web can't. | Untested; Antigravity (local) joins as `antigravity` |
 | **Grok Bot** | No. It works in an xAI cloud computer, not on your machine. | Can't join; Grok Build (local CLI) joins as `generic` |
@@ -56,9 +55,11 @@ Grok Build, ...) run on your machine and always qualify. Chat apps vary, as of O
 Notes:
 - **Local access still means cloud processing.** Whatever a chat app reads from a connected folder is
   sent to that provider's models. Connect the project folder only, not your home folder.
-- **Claude's Cowork runs code in the cloud**, in an isolated environment on Anthropic's servers. It
-  reads and writes your connected folders but does not execute against your machine. In this
-  pipeline, any code runs in the local agents.
+- **Claude has other routes in the desktop app:** the Filesystem extension (Settings → Extensions)
+  and Cowork's connected folders. Local devices is the simplest of the three, and the only one that
+  also reaches your files from a phone or browser.
+- **The computer must be on, with the Claude app running.** If it is asleep or the app is closed,
+  the chat can't see `comms/` and the skill tells it to stop rather than guess.
 - **Gemini CLI no longer serves personal accounts.** That ended on 18 June 2026 for free, AI Pro and AI
   Ultra; enterprise and API-key users keep it. Personal users should add `antigravity` (Antigravity
   CLI, `agy`) instead of `gemini`.

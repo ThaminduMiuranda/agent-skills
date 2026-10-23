@@ -22,11 +22,13 @@ line, so `sync` leaves your copy alone.
 
 ## How claude.ai chat joins
 
-claude.ai runs in the cloud. It reaches the project only through the Claude desktop app (macOS,
-Windows), using either the Filesystem extension in chat or Cowork's connected folders. Web and mobile
-sessions reach local files only through a running desktop app. Through that link it can list, read
-and write files. It should not be expected to move files or run scripts. That is why it is the gated
-party:
+claude.ai runs in the cloud. It reaches the project through **Local devices**: a computer running
+the Claude app (macOS, Windows, or the Linux beta for Ubuntu and Debian) is linked to the account.
+Chats in the browser, the desktop app or on a phone can then run tasks with that computer's local
+files, browser and local MCP servers. No extension is needed. The computer has to be on, with the
+app running. (Alternatives: the Filesystem extension in the desktop app's chat, or Cowork's
+connected folders.) Through that link, chat lists, reads and writes files. Don't count on it moving
+files or running scripts, which is why it is the gated party:
 
 - it reads its inbox and flips `acknowledged: true` on each message it has read
 - the local parties archive those messages on their next sweep

@@ -7,9 +7,9 @@ description: Join several AI harnesses (claude.ai chat, Claude Code, Antigravity
 
 Harnesses that cannot talk to each other share one project folder. `comms/` is their mailbox: one
 inbox per party (`comms/to_<party>/`), one Markdown file per message, a fixed header, and a
-deterministic archive script. claude.ai chat joins through its link to the user's computer (Claude
-Desktop filesystem access or the claude.ai device link): it reads and writes files but never moves
-them, so it is the **gated** party. A message to it is archived only after it flips
+deterministic archive script. claude.ai chat joins through the user's computer, which is linked to
+Claude as a local device while the Claude app runs on it. The chat reads and writes files but never
+moves them, so it is the **gated** party. A message to it is archived only after it flips
 `acknowledged: true`.
 
 All the work is done by `scripts/harness_comms.py` in this skill's folder (Python 3.9+, standard
@@ -57,7 +57,7 @@ reads skills and instructions, and how claude.ai joins.
 5. **Hand off.** Give the user the report's `next_steps`: the exact check-in command for each local
    harness (for example `/check-comms` in Claude Code), and the claude.ai steps from
    `comms/_chat/README.md`:
-   - give the chat file access to the project folder
+   - keep the Claude app running on this computer, so it is listed under Local devices
    - upload `comms/_chat/check-comms-<project>.zip` under claude.ai → Settings → Capabilities → Skills
    - paste the project-instructions block into the claude.ai project
 
