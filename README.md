@@ -30,7 +30,7 @@ python3 install.py --zip                  # dist/<skill>.zip, for uploading to a
 **`npx skills`:**
 
 ```bash
-npx skills add ThaminduMiuranda/agent-skills --skill <skill>   # leave out --skill to choose from a list
+npx skills add ThaminduMiuranda/agent-skills --skill <skill>   # --list shows the skills; --skill '*' installs all
 ```
 
 **Without cloning** (set `DEST` to your harness's skills folder):
