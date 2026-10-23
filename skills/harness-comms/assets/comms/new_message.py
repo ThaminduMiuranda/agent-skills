@@ -47,7 +47,7 @@ def main():
     ap.add_argument("--from", dest="sender", required=True, choices=parties)
     ap.add_argument("--to", dest="recipient", required=True, choices=parties)
     ap.add_argument("--type", dest="kind", required=True, choices=sorted(SECTIONS))
-    ap.add_argument("--re", dest="re_id", default="none", help="id of the message this answers")
+    ap.add_argument("--re", dest="re_id", help="id of the message this answers, or none")
     ap.add_argument("--slug", required=True, help="a few words, lowercase-hyphenated")
     ap.add_argument("--status", choices=["open", "done"])
     args = ap.parse_args()
@@ -55,8 +55,10 @@ def main():
     slug = re.sub(r"[^a-z0-9]+", "-", args.slug.lower()).strip("-")
     if not slug:
         sys.exit("--slug must contain letters or digits.")
-    if args.kind != "request" and args.re_id == "none":
-        print("warning: an answer or note usually sets --re to the request's id", file=sys.stderr)
+    if args.re_id is None:
+        if args.kind != "request":
+            print("warning: an answer or note usually sets --re to the request's id", file=sys.stderr)
+        args.re_id = "none"
     status = args.status or ("open" if args.kind == "request" else "done")
 
     stamp = now_in(tz_name).strftime("%Y-%m-%d_%H%M")

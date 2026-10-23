@@ -56,3 +56,8 @@ anything.
 | OpenCode | `~/.config/opencode/skills/` (also reads `~/.claude/skills/` and `~/.agents/skills/`) |
 
 The repo's `install.py` copies or links the skill into any of these folders.
+
+**Same-name shadowing.** If an older skill with the same name is installed at user level (for example
+an earlier `~/.claude/skills/harness-comms`), Claude Code loads that one rather than a newer
+project-level copy. Replace the old install (`install.py --force`) or remove it. To test a project
+copy in isolation, run `claude --setting-sources project,local`.

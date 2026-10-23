@@ -44,9 +44,15 @@ reads skills and instructions, and how claude.ai joins.
    (claude-code), `antigravity`, `codex`, `gemini` (gemini-cli), `opencode`.
 3. **Run it without `--dry-run`.** If it exits with code 2 and `"status": "conflict"`, some files
    exist that this tool did not write (for example a hand-written `CLAUDE.md`). Nothing has changed at
-   that point. Show the user the list, then rerun with `--on-conflict skip` (leave those files alone)
-   or `--on-conflict overwrite`. For `CLAUDE.md`, `AGENTS.md` and `GEMINI.md`, overwrite only merges in
-   a marked `## comms/` section and keeps the rest of the file.
+   that point. Show the user the list and let them pick, then rerun with that choice:
+   - `--on-conflict merge`: add a marked `## comms/` section to `CLAUDE.md`, `AGENTS.md` and
+     `GEMINI.md`, keeping the rest of each file, and leave every other conflicting file alone.
+   - `--on-conflict skip`: leave all of them alone.
+   - `--on-conflict overwrite`: replace them. The instruction files still only get the section
+     merged in.
+
+   If you cannot ask (a non-interactive run), use `merge`, and list the skipped files in your
+   report. Never use `overwrite` without the user's say-so.
 4. **Verify.** Run `validate` and `status`, and re-read a generated file or two from disk.
 5. **Hand off.** Give the user the report's `next_steps`: the exact check-in command for each local
    harness (for example `/check-comms` in Claude Code), and the claude.ai steps from
