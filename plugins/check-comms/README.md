@@ -18,6 +18,7 @@ At run time, in the folders connected to the linked computer: any `comms/README.
 (harness-comms) gives the project name. Your own list lives on the linked computer, because the installed plugin is read-only:
 `check-comms-registry.md` at the root of a connected folder or one of its direct subfolders, with a Projects table (nicknames, extra
 paths) and an Ignored table (folders discovery skips). add-project and remove-project manage it, and it is safe to edit by hand.
+Its paths are relative to the registry file's folder, so it can be committed to a repo and shared across computers and OSes.
 Format: `skills/check/references/registry.md`. `skills/check/references/projects.md` is only a built-in fallback.
 Adding a project needs no rebuild: run harness-comms `init` in a connected folder, or `/check-comms:add-project`. Only new shortcut
 commands need a rebuild.

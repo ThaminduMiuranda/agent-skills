@@ -30,7 +30,7 @@ Discovery (only when the argument is not an absolute path, or to list candidates
    `__pycache__`, `data`, `papers`, `out`, `work`, `Datasets`, `archive`). Never stage files just to discover.
 3. A folder whose `comms/` holds `config.json` is a harness-comms project: its key is `harness-comms.project` from that file
    (stage it, it is small). A `comms/` with only `README.md` is an older-protocol project: its key is the parent folder name.
-4. Read the registry (`references/registry.md` says where and how). Add its Projects rows that discovery did not reach, and drop
+4. Read the registry (`references/registry.md` says where and how, and that its paths are relative to the registry's own folder). Add its Projects rows that discovery did not reach, and drop
    every discovered project whose comms folder is listed under Ignored. Then add any `projects.md` path still missing.
 If the linked computer cannot be reached, say so plainly (asleep, offline, or the Claude app closed) and stop.
 

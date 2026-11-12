@@ -27,6 +27,8 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/check/references/registry.md` first (location
    - If the comms folder is under Ignored, move it back (delete that Ignored row).
    - If it is already under Projects, merge the nicknames instead of adding a second row.
    - If a nickname is already used by another project, stop and ask for a different one.
-   - Otherwise add one Projects row: nicknames, comms folder path, protocol, today's date (from a clock).
+   - Otherwise add one Projects row: nicknames, comms folder path relative to the registry's folder (see `registry.md`), protocol,
+     today's date (from a clock).
+   - If the registry still has absolute paths in other rows, offer to convert them to relative in the same write.
 5. **Verify** the write as `routine.md` requires (re-stage, compare). Report: the row as written, the registry path, the comms state, and
    the command to check it (`/check-comms:check <first nickname>`). Chat never creates, moves or deletes anything inside the project.

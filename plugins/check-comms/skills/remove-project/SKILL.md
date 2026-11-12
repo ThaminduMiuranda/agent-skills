@@ -18,7 +18,7 @@ the Read tool. Read `${CLAUDE_PLUGIN_ROOT}/skills/check/references/registry.md` 
 3. **Registry.** Find `check-comms-registry.md` as `registry.md` describes (connected folder roots and their direct subfolders) (create it in the exact format from `registry.md` if
    none exists, asking where).
    - Delete the project's row from Projects, if present.
-   - Add a row under Ignored: the comms folder path, today's date (from a clock), and the reason if the user gave one (else `removed`).
+   - Add a row under Ignored: the comms folder path relative to the registry's folder, today's date (from a clock), and the reason if the user gave one (else `removed`).
      Skip if it is already there.
 4. **Verify** the write as `routine.md` requires. Report what changed, and how to undo it (`/check-comms:add-project <path>`).
    If the project's built-in fallback nickname in `projects.md` still matches, say that the nickname keeps resolving until the plugin is
