@@ -13,18 +13,21 @@ before it may be archived, usually the claude.ai chat).
                 run. `--chat` is accepted as an alias.
   (no --as)     sweep every non-gated inbox on `status: done` (older behaviour, kept for compatibility).
   --dry-run     print what would move; change nothing.
+  --stale-hours when config.json turns claiming on, report `status: in_progress` requests in any inbox
+                whose `claimed_at` is older than this (default 12), missing or unparseable. Reported
+                only: a claim is never reset, and `in_progress` or `blocked` files are never moved.
 
 Each archived file moves to archive/<YYYY-MM>/ (month from the filename's date prefix) and one line is
 appended to archive/INDEX.md. Never overwrites an existing archive file. Run from anywhere; paths
 resolve from this file's own location.
 
-Usage: python3 comms/archive_sweep.py --as <party> [--gated] [--dry-run]
+Usage: python3 comms/archive_sweep.py --as <party> [--gated] [--dry-run] [--stale-hours 12]
 """
 import argparse
 import json
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 COMMS = Path(__file__).resolve().parent
@@ -42,7 +45,36 @@ def load_config():
     gated = cfg.get("gated_party")
     if gated and gated not in parties:
         sys.exit(f"gated_party {gated!r} is not in parties {parties!r}.")
-    return parties, gated
+    hc = cfg.get("harness-comms") or {}
+    return parties, gated, bool(hc.get("claiming")), hc.get("timezone", "UTC")
+
+
+def now_in(tz_name):
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo(tz_name))
+    except Exception:
+        return datetime.now().astimezone()
+
+
+def stale_claim(fields, now, hours):
+    """Why an in_progress claim looks stale, else None. Naive claimed_at is read as project time."""
+    if fields.get("status", "") != "in_progress":
+        return None
+    who = fields.get("claimed_by", "") or "none"
+    raw = fields.get("claimed_at", "")
+    if not raw or raw.lower() == "none":
+        return f"claimed_by={who}, claimed_at missing"
+    try:
+        at = datetime.fromisoformat(raw)
+    except ValueError:
+        return f"claimed_by={who}, claimed_at={raw} (unparseable)"
+    if at.tzinfo is None:
+        at = at.replace(tzinfo=now.tzinfo)
+    age = (now - at).total_seconds() / 3600
+    if age > hours:
+        return f"claimed_by={who}, claimed_at={raw} ({age:.1f}h old > {hours:g}h)"
+    return None
 
 
 def parse(path):
@@ -67,9 +99,11 @@ def main():
     ap.add_argument("--gated", "--chat", action="store_true",
                     help="also sweep the gated inbox (status: done AND acknowledged: true)")
     ap.add_argument("--dry-run", action="store_true", help="show what would move, change nothing")
+    ap.add_argument("--stale-hours", type=float, default=12.0,
+                    help="with claiming on, report in_progress claims older than this (default 12)")
     args = ap.parse_args()
 
-    parties, gated = load_config()
+    parties, gated, claiming, tz_name = load_config()
     if args.party:
         if args.party not in parties:
             sys.exit(f"Unknown party {args.party!r}; config.json lists {parties!r}.")
@@ -78,6 +112,15 @@ def main():
         inboxes = [p for p in parties if p != gated]
     if args.gated and gated:
         inboxes.append(gated)
+
+    if claiming:
+        now = now_in(tz_name)
+        for party in parties:
+            for f in sorted((COMMS / f"to_{party}").glob("*.md")):
+                parsed = parse(f)
+                why = parsed and stale_claim(parsed[0], now, args.stale_hours)
+                if why:
+                    print(f"[stale-claim] {f.relative_to(COMMS).as_posix()}: {why}")
 
     archive = COMMS / "archive"
     moved, skipped = [], []

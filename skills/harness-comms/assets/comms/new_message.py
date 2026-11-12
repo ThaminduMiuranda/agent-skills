@@ -6,6 +6,10 @@ The filename timestamp comes from the real clock in the project timezone (comms/
 party ever has to guess or round one. `acknowledged: false` is added when the recipient is the gated
 party. The body gets the protocol's section headings, left for you to fill in.
 
+When config.json turns claiming on, a request also gets `claimed_by: none` and `claimed_at: none`.
+Each project field in config.json `extra_fields` (for example `repo`) is a flag of the same name; if
+it is not given, the stamper asks for it on a terminal and writes `none` otherwise.
+
 Usage:
   python3 comms/new_message.py --from code --to chat --type answer --re <request-id> --slug labels-done
   python3 comms/new_message.py --from chat --to code --type request --slug rerun-eval
@@ -41,7 +45,9 @@ def main():
     cfg = json.loads((COMMS / "config.json").read_text(encoding="utf-8"))
     parties = cfg.get("parties") or []
     gated = cfg.get("gated_party")
-    tz_name = (cfg.get("harness-comms") or {}).get("timezone", "UTC")
+    hc = cfg.get("harness-comms") or {}
+    tz_name = hc.get("timezone", "UTC")
+    extras = [f for f in hc.get("extra_fields") or [] if f.get("name")]
 
     ap = argparse.ArgumentParser(description="Create a comms/ message file.")
     ap.add_argument("--from", dest="sender", required=True, choices=parties)
@@ -50,6 +56,8 @@ def main():
     ap.add_argument("--re", dest="re_id", help="id of the message this answers, or none")
     ap.add_argument("--slug", required=True, help="a few words, lowercase-hyphenated")
     ap.add_argument("--status", choices=["open", "done"])
+    for f in extras:
+        ap.add_argument(f"--{f['name']}", dest=f"x_{f['name']}", help=f.get("help") or "project field")
     args = ap.parse_args()
 
     slug = re.sub(r"[^a-z0-9]+", "-", args.slug.lower()).strip("-")
@@ -76,6 +84,13 @@ def main():
         f"type: {args.kind}",
         f"status: {status}",
     ]
+    for f in extras:
+        value = getattr(args, f"x_{f['name']}")
+        if value is None and sys.stdin.isatty():
+            value = input(f"{f['name']} ({f.get('help') or 'project field'}; Enter for none): ").strip()
+        header.append(f"{f['name']}: {value or 'none'}")
+    if hc.get("claiming") and args.kind == "request":
+        header += ["claimed_by: none", "claimed_at: none"]
     if args.recipient == gated:
         header.append("acknowledged: false")
     header.append("---")

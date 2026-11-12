@@ -6,7 +6,7 @@ Subcommands
   add-party   add one party to an existing comms/ setup, then sync
   sync        (re)generate every derived file from comms/config.json
   validate    check comms/ structure and every message header
-  status      summarise open, unacknowledged and sweep-ready messages per inbox
+  status      summarise open, claimed, unacknowledged and sweep-ready messages per inbox
 
 Python 3.9+ standard library only. Every subcommand prints a JSON report to stdout (and writes it to
 --output if given). init, add-party and sync stop with exit code 2, writing nothing, if they would
@@ -29,12 +29,17 @@ MARK = "harness-comms: generated file"
 MD_MARK = f"<!-- {MARK}. Edit comms/config.json and run sync to change it; delete this line to own it. -->"
 BLOCK_START = "<!-- harness-comms:start -->"
 BLOCK_END = "<!-- harness-comms:end -->"
+NOTES_START = "<!-- harness-comms:project-notes:start -->"
+NOTES_END = "<!-- harness-comms:project-notes:end -->"
 CHAT_DIR = "comms/_chat"
 
 HEADER_RE = re.compile(r"^---\r?\n(.*?)\r?\n---\r?\n(.*)$", re.DOTALL)
 FIELD_RE = re.compile(r"^([A-Za-z0-9_-]+):\s*(.*)$", re.MULTILINE)
 FILENAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2}_\d{4})_([a-z0-9-]+?)_([a-z0-9][a-z0-9.-]*)\.md$")
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+FIELD_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+BASE_FIELDS = ("id", "from", "to", "re", "type", "status", "acknowledged", "claimed_by", "claimed_at")
+STALE_HOURS = 12
 
 # Where each harness reads project skills and instructions, and what it is good at by default.
 HARNESSES = {
@@ -169,6 +174,9 @@ def normalise(cfg, root):
     hc.setdefault("routing", {})
     hc.setdefault("hard_rules", list(DEFAULT_RULES))
     hc.setdefault("ownership", [])
+    hc.setdefault("claiming", False)  # absent in configs older than v0.2.0, which had no claiming
+    hc.setdefault("extra_fields", [])
+    hc.setdefault("pre_archive_steps", [])
     return cfg
 
 
@@ -209,6 +217,32 @@ def check_config(cfg):
         h = cfg["harness-comms"]["harnesses"][p]
         if h not in HARNESSES:
             raise SystemExit(f"party {p!r} has unknown harness {h!r}; known: {sorted(HARNESSES)}")
+    for f in cfg["harness-comms"]["extra_fields"]:
+        name = f.get("name", "") if isinstance(f, dict) else ""
+        if not FIELD_NAME_RE.match(name) or name in BASE_FIELDS:
+            raise SystemExit(f"extra_fields: {name!r} must be a new lowercase field name, "
+                             f"not one of {list(BASE_FIELDS)}")
+
+
+def claiming(cfg):
+    return bool(cfg["harness-comms"].get("claiming"))
+
+
+def extra_fields(cfg):
+    return cfg["harness-comms"].get("extra_fields") or []
+
+
+def pre_archive_steps(cfg):
+    return cfg["harness-comms"].get("pre_archive_steps") or []
+
+
+def statuses(cfg):
+    return ("open", "in_progress", "blocked", "done") if claiming(cfg) else ("open", "done")
+
+
+def numbered(steps):
+    """['a', 'b'] -> '1. a\n2. b'; continuation lines in a step are already indented by three spaces."""
+    return "\n".join(f"{i}. {step}" for i, step in enumerate(steps, 1))
 
 
 # ------------------------------------------------------------------------------------------- rendering
@@ -240,10 +274,27 @@ def py():
     return "python3"
 
 
+def header_lines(cfg, pad=22):
+    """Extra header lines between `status:` and `acknowledged:`: project fields, then claim fields."""
+    lines = []
+    for f in extra_fields(cfg):
+        text = f"{f['name']}: none"
+        lines.append(f"{text:<{pad}}# {f['help']}" if f.get("help") else text)
+    if claiming(cfg):
+        lines.append(f"{'claimed_by: none':<{pad}}# requests only: the party working on it")
+        lines.append(f"{'claimed_at: none':<{pad}}# requests only: ISO 8601 time of the claim, real clock")
+    return "".join(line + "\n" for line in lines)
+
+
+def stamper_extras(cfg):
+    return "".join(f" --{f['name']} <value>" for f in extra_fields(cfg))
+
+
 def render_readme(cfg):
     hc = cfg["harness-comms"]
     parties = cfg["parties"]
     gated = cfg.get("gated_party")
+    claim = claiming(cfg)
     rows = "\n".join(f"| **{p}** | {info(cfg, p)['title']} | {info(cfg, p)['reach']} |" for p in parties)
     routing = "\n".join(
         f"| **{p}** | {info(cfg, p)['good_for']} | {info(cfg, p)['not_for']} |" for p in parties)
@@ -267,6 +318,63 @@ party once a message is `status: done`.
         ack_line = f"acknowledged: false   # only on messages to {gated}; {gated} flips it to true after reading\n"
     else:
         gate, ack_line = "", ""
+    status_line = "status: open          # " + " | ".join(statuses(cfg))
+    extras = ""
+    if extra_fields(cfg):
+        listed = "; ".join(f"`{f['name']}`" + (f" ({f['help']})" if f.get("help") else "")
+                           for f in extra_fields(cfg))
+        extras = (f"\nThis project adds header fields: {listed}. Pass each to the stamper "
+                  f"(`{stamper_extras(cfg).strip()}`); `none` when it does not apply.\n")
+
+    claim_section = ""
+    if claim:
+        claim_section = f"""
+## Claiming a request
+
+Two parties, or two sessions of one party, may check in at the same time. A request is therefore
+claimed before anyone works on it.
+
+1. Pick up only `status: open` requests. Edit the request header in place: `status: in_progress`,
+   `claimed_by: <you>`, `claimed_at: <now>` (ISO 8601 with UTC offset, read from the real clock, for
+   example `date -Iseconds`).
+2. Re-read the file at once. Go on only if `claimed_by` is still you; otherwise leave it alone.
+3. Never touch an `in_progress` request someone else claimed. `archive_sweep.py` reports claims older
+   than {STALE_HOURS} hours (`--stale-hours`), or with a missing or unparseable `claimed_at`, for the human to
+   look at. Nobody resets a claim automatically.
+4. `status: blocked` means waiting on the human. Only the human, or a party they tell, sets it back to
+   `open`.
+"""
+        steps = [
+            'On "check comms", read every `status: open` file in your own `to_<you>/`, and claim each\n'
+            "   request (above) before starting it.",
+            "Do the request within your own instruction file and the rules below. If it belongs with another\n"
+            "   party (see the routing table), say so in your answer instead of doing it.",
+            "Answer with a new file in the sender's inbox: `re:` = the request's id, `type: answer`,\n"
+            "   `status: done`. For a staged task, send `type: note` (`status: done` on the note) and leave the\n"
+            "   request `in_progress` until the last stage lands. If the human must decide, set the request's\n"
+            "   `status: blocked` and say in your answer what is needed.",
+        ]
+        finish = ("When a request is finished, set its `status: done` (a one-field edit to the file in your own\n"
+                  f"   inbox) and run `{py()} comms/archive_sweep.py --as <you> --gated`.")
+        own_edit = ("Claiming a request in your own inbox (`status`, `claimed_by`, `claimed_at`), setting it to\n"
+                    "   `blocked` or `done`, and the sweep moving it once it is `done`.")
+        archive_extra = ("\n`in_progress` and `blocked` messages are never moved. Stale claims are reported, "
+                         "never reset.")
+    else:
+        steps = [
+            'On "check comms", read every `status: open` file in your own `to_<you>/`.',
+            "Do the request within your own instruction file and the rules below. If it belongs with another\n"
+            "   party (see the routing table), say so in your answer instead of doing it.",
+            "Answer with a new file in the sender's inbox: `re:` = the request's id, `type: answer`,\n"
+            "   `status: done`. For a staged task, send `type: note` (`status: done` on the note) and leave the\n"
+            "   request `open` until the last stage lands. If the human must decide, leave it open and say what is\n"
+            "   needed.",
+        ]
+        finish = ("When a request is finished, set its `status: done` (a one-field edit to the file in your own inbox)\n"
+                  f"   and run `{py()} comms/archive_sweep.py --as <you> --gated`.")
+        own_edit = "Setting `status: done` on a request in your own inbox once it is finished, and the sweep moving it."
+        archive_extra = ""
+    steps += [s.replace("\n", "\n   ") for s in pre_archive_steps(cfg)] + [finish]
 
     return f"""{MD_MARK}
 # comms/: message channel between {", ".join(parties)}
@@ -304,7 +412,7 @@ in **{hc["timezone"]}**, read from the clock at the moment of writing: never gue
 from an earlier message. Local harnesses create messages with the stamper, which does this for them:
 
 ```
-{py()} comms/new_message.py --from {parties[0]} --to {example_to} --type request --slug short-slug
+{py()} comms/new_message.py --from {parties[0]} --to {example_to} --type request --slug short-slug{stamper_extras(cfg)}
 ```
 
 Every message starts with this header:
@@ -316,31 +424,23 @@ from: {parties[0]}
 to: {example_to}
 re: none              # id of the message this answers, or none
 type: request         # request | answer | note
-status: open          # open | done
-{ack_line}---
+{status_line}
+{header_lines(cfg)}{ack_line}---
 ```
-
+{extras}
 Then short sections: `## Ask` (request) or `## Answer` (answer, note); `## Context` (paths relative to
 the project root, ids); `## Expected output` (requests only: format, checks, where to write it). Point
 at files instead of pasting them. A number in a message says which file it came from.
-{gate}
+{gate}{claim_section}
 ## Handling a message (every party)
 
-1. On "check comms", read every `status: open` file in your own `to_<you>/`.
-2. Do the request within your own instruction file and the rules below. If it belongs with another
-   party (see the routing table), say so in your answer instead of doing it.
-3. Answer with a new file in the sender's inbox: `re:` = the request's id, `type: answer`,
-   `status: done`. For a staged task, send `type: note` (`status: done` on the note) and leave the
-   request `open` until the last stage lands. If the human must decide, leave it open and say what is
-   needed.
-4. When a request is finished, set its `status: done` (a one-field edit to the file in your own inbox)
-   and run `{py()} comms/archive_sweep.py --as <you> --gated`.
+{numbered(steps)}
 
 `status: done` on an answer means "nothing more is needed on this message", not "the task is finished".
 
 ## The only edits to another party's file
 
-1. Setting `status: done` on a request in your own inbox once it is finished, and the sweep moving it.
+1. {own_edit}
 2. The gated party flipping `acknowledged: false` to `true` after reading.
 
 Everything else is a new file.
@@ -350,7 +450,7 @@ Everything else is a new file.
 `archive_sweep.py` is deterministic (no model calls). `--as <you>` sweeps only your own inbox on
 `status: done`; `--gated` also sweeps the gated inbox where `status: done` and `acknowledged: true`.
 Files go to `archive/YYYY-MM/` by their filename date, and one line per file is appended to
-`archive/INDEX.md`, which is never rewritten. `--dry-run` previews.
+`archive/INDEX.md`, which is never rewritten. `--dry-run` previews.{archive_extra}
 
 ## Rules for every party
 {rules}
@@ -363,12 +463,56 @@ def render_local_skill(cfg, party):
     others = [p for p in cfg["parties"] if p != party]
     name = skill_name(cfg, party)
     tz = cfg["harness-comms"]["timezone"]
+    claim = claiming(cfg)
     gated_step = ""
     if party == gated:
         gated_step = f"""
    You are the gated party: after actually reading each message with `acknowledged: false`, change that
    one field to `acknowledged: true`, save, and re-read the file to confirm only that line changed."""
+    claim_step = ""
+    if claim:
+        claim_step = f"""
+   Claim each request before working on it: set `status: in_progress`, `claimed_by: {party}` and
+   `claimed_at:` the real time (ISO 8601 with UTC offset, for example `date -Iseconds`), save, re-read,
+   and go on only if `claimed_by` is still `{party}`. Skip `in_progress` (someone has it) and
+   `blocked` (waiting on the user)."""
     ack_note = f" It adds `acknowledged: false` for messages to `{gated}`." if gated and gated != party else ""
+    extras = stamper_extras(cfg)
+    if extra_fields(cfg):
+        ack_note += "\n   Pass " + ", ".join(
+            f"`--{f['name']}`" + (f" ({f['help']})" if f.get("help") else "") for f in extra_fields(cfg)
+        ) + "."
+    if claim:
+        staged = ("For a staged task use\n   `--type note` and leave the request `in_progress`. If the user must "
+                  "decide, set the request\n   `status: blocked` and say in the answer what is needed.")
+        finish = ("When a request in your inbox is fully done, change its `status: in_progress` to\n"
+                  f"   `status: done` (only that field) and run `{py()} comms/archive_sweep.py --as {party} --gated`.")
+        glance = (f"Glance at the other inboxes ({', '.join(f'`to_{p}/`' for p in others) or 'none'}) for files "
+                  "that are not\n   `done`, so you know what is pending elsewhere: `open`, `in_progress` (who "
+                  f"and since when; flag a\n   claim older than {STALE_HOURS} h or with no `claimed_at` as possibly "
+                  "stale) and `blocked`. Do not act on them.")
+    else:
+        staged = "For a staged task use\n   `--type note` and leave the request open."
+        finish = ("When a request in your inbox is fully done, change its `status: open` to `status: done` (only that\n"
+                  f"   field) and run `{py()} comms/archive_sweep.py --as {party} --gated`.")
+        glance = (f"Glance at the other inboxes ({', '.join(f'`to_{p}/`' for p in others) or 'none'}) for `status: open`\n"
+                  "   files so you know what is pending elsewhere. Do not act on them.")
+    steps = [
+        f"List `comms/to_{party}/` and read every file with `status: open` in full.{gated_step}{claim_step}",
+        "Do each request within your instruction file and the rules in `comms/README.md`. If the routing\n"
+        "   table there says it belongs to another party, say so in your answer instead of doing it.",
+        f"Answer with the stamper, which names the file from the real clock ({tz}) and writes the header:\n"
+        f"   `{py()} comms/new_message.py --from {party} --to <sender> --type answer --re <request id> --slug <slug>{extras}`\n"
+        f"   It prints the new path; fill in `## Answer` and `## Context`.{ack_note} {staged}",
+    ]
+    steps += [s.replace("\n", "\n   ") for s in pre_archive_steps(cfg)]
+    steps += [
+        finish,
+        glance,
+        "Report briefly: what was open in your inbox, what you answered (new file paths), and what is still\n"
+        "   open and waiting on whom.",
+    ]
+    never_claim = "\n- Reset, take over or work on a request another party has claimed." if claim else ""
     return f"""---
 name: {name}
 description: Check this project's comms/ folder for messages addressed to {party} ({me["title"]}), answer open requests, archive finished ones, and report what is outstanding. Use when the user says "check comms", asks whether {" or ".join(others) or "another party"} replied, or wants to send work to another party.
@@ -380,30 +524,18 @@ The protocol is `comms/README.md`; follow it for anything this does not cover.
 
 ## Check in
 
-1. List `comms/to_{party}/` and read every file with `status: open` in full.{gated_step}
-2. Do each request within your instruction file and the rules in `comms/README.md`. If the routing
-   table there says it belongs to another party, say so in your answer instead of doing it.
-3. Answer with the stamper, which names the file from the real clock ({tz}) and writes the header:
-   `{py()} comms/new_message.py --from {party} --to <sender> --type answer --re <request id> --slug <slug>`
-   It prints the new path; fill in `## Answer` and `## Context`.{ack_note} For a staged task use
-   `--type note` and leave the request open.
-4. When a request in your inbox is fully done, change its `status: open` to `status: done` (only that
-   field) and run `{py()} comms/archive_sweep.py --as {party} --gated`.
-5. Glance at the other inboxes ({", ".join(f"`to_{p}/`" for p in others) or "none"}) for `status: open`
-   files so you know what is pending elsewhere. Do not act on them.
-6. Report briefly: what was open in your inbox, what you answered (new file paths), and what is still
-   open and waiting on whom.
+{numbered(steps)}
 
 ## Send a request
 
-`{py()} comms/new_message.py --from {party} --to <party> --type request --slug <slug>`, then fill in
+`{py()} comms/new_message.py --from {party} --to <party> --type request --slug <slug>{extras}`, then fill in
 `## Ask`, `## Context` and `## Expected output`. Make the result checkable.
 
 ## Never
 
 - Guess a timestamp or hand-name a file when the stamper is available.
-- Edit, move or delete another party's file beyond the two edits `comms/README.md` allows.
-- Treat a write as done without re-reading the file from disk.
+- Edit, move or delete another party's file beyond the {"edits" if claim else "two edits"} `comms/README.md` allows.
+- Treat a write as done without re-reading the file from disk.{never_claim}
 """
 
 
@@ -436,12 +568,38 @@ def render_chat_skill(cfg, party, root):
         f"| `{p}` | {info(cfg, p)['title']} | {info(cfg, p)['good_for']} | {info(cfg, p)['not_for']} |"
         for p in others)
     gated = party == cfg.get("gated_party")
-    ack_steps = """
+    claim = claiming(cfg)
+    only = "Apart from claiming requests (step 4), this is" if claim else "This is"
+    ack_steps = f"""
 3. After actually reading a message with `acknowledged: false`, change that one field to
-   `acknowledged: true` and save the file. Re-read it to confirm that only that line changed. This is
+   `acknowledged: true` and save the file. Re-read it to confirm that only that line changed. {only}
    the only edit you ever make to a file you did not write; you never move or delete files (the local
-   parties archive acknowledged messages).""" if gated else """
-3. Never edit, move or delete a file you did not write."""
+   parties archive acknowledged messages).""" if gated else (
+        "\n3. Never edit a file you did not write, except to claim a request addressed to you (step 4), and"
+        "\n   never move or delete one." if claim else """
+3. Never edit, move or delete a file you did not write.""")
+    pre = "".join(f"\n   - {s}" for s in pre_archive_steps(cfg))
+    if pre:
+        pre = "\n   Before you set a request `status: done`:" + pre
+    if claim:
+        request_step = f"""4. A `type: request` with `status: open` addressed to you is usually a question for the user. Claim
+   it first: set `status: in_progress`, `claimed_by: {party}` and `claimed_at:` the real time (ISO 8601
+   with UTC offset), save, re-read, and go on only if `claimed_by` is still `{party}`. Discuss it, answer
+   it with a new message (below), then set the request's `status: done`, or `status: blocked` if the
+   user has to decide something first.{pre}
+5. Glance at the other inboxes ({", ".join(f"`to_{p}/`" for p in others)}) for files that are not `done`
+   and tell the user what is waiting on whom: `open`, `in_progress` (who and since when; a claim older
+   than {STALE_HOURS} h or with no `claimed_at` is possibly stale, never reset it) and `blocked`. Do not act on
+   them."""
+    else:
+        request_step = f"""4. A `type: request` with `status: open` addressed to you is usually a question for the user: discuss
+   it, then answer it with a new message (below).{pre}
+5. Glance at the other inboxes ({", ".join(f"`to_{p}/`" for p in others)}) for `status: open` files and
+   tell the user what is still waiting on whom. Do not act on them."""
+    status_comment = "open for a request; done for an answer or note"
+    if claim:
+        status_comment += " (" + " | ".join(statuses(cfg)) + ")"
+    template_extra = header_lines(cfg, pad=25)
     return f"""---
 name: {chat_skill_name(cfg, party)}
 description: Check the {hc["project"]} comms/ folder on the user's computer ({comms}) for messages to {party} from {", ".join(others)}, acknowledge what you read, and write answers or requests back. Use when the user says "check comms" about {hc["project"]}, asks whether {" or ".join(others)} replied, or wants to hand work to one of them.
@@ -463,10 +621,7 @@ computer, and the computer must show up under Local devices. Do not invent the f
 1. List `{comms}/to_{party}/`.
 2. Read every message in it in full, oldest first, and tell the user what each one says (one or two
    lines each, with the file name).{ack_steps}
-4. A `type: request` with `status: open` addressed to you is usually a question for the user: discuss
-   it, then answer it with a new message (below).
-5. Glance at the other inboxes ({", ".join(f"`to_{p}/`" for p in others)}) for `status: open` files and
-   tell the user what is still waiting on whom. Do not act on them.
+{request_step}
 
 ## Write a message
 
@@ -481,8 +636,8 @@ from: {party}
 to: <recipient>
 re: <id of the message this answers, or none>
 type: request            # request | answer | note
-status: open             # open for a request; done for an answer or note
----
+status: open             # {status_comment}
+{template_extra}---
 
 ## Ask                   # "## Answer" for an answer or note
 <one or two sentences>
@@ -589,6 +744,14 @@ def merge_block(existing, block):
     return existing + sep + block
 
 
+def carry_notes(current, content):
+    """Keep a project-notes block the user added to a generated Markdown file; sync never rewrites it."""
+    if NOTES_START not in current or NOTES_END not in current or NOTES_START in content:
+        return content
+    block = NOTES_START + current.split(NOTES_START, 1)[1].split(NOTES_END, 1)[0] + NOTES_END
+    return content.rstrip("\n") + "\n\n" + block + "\n"
+
+
 def is_owned(path):
     if path.suffix == ".zip":
         return path.with_suffix("").joinpath("SKILL.md").is_file() and is_owned(
@@ -626,6 +789,8 @@ def apply(cfg, root, on_conflict, dry_run, config_text=None):
             conflicts.append(rel)
             actions.append({"path": rel, "action": "conflict (not generated by harness-comms)"})
             continue
+        elif kind == "owned" and isinstance(content, str) and path.suffix == ".md":
+            data = carry_notes(current.decode("utf-8", "replace"), content).encode("utf-8")
         if current == data:
             actions.append({"path": rel, "action": "unchanged"})
         else:
@@ -687,7 +852,7 @@ def next_steps(cfg):
 
 # -------------------------------------------------------------------------------------------- auditing
 
-def read_message(path, root):
+def read_message(path, root, allowed_statuses=("open", "done")):
     rel = path.relative_to(root).as_posix()
     issues = []
 
@@ -716,8 +881,8 @@ def read_message(path, root):
         issue("from_matches_name", f"from {fields['from']!r} is not the sender in the file name")
     if fields.get("type") not in (None, "", "request", "answer", "note"):
         issue("type", f"type {fields['type']!r} is not request | answer | note")
-    if fields.get("status") not in (None, "", "open", "done"):
-        issue("status", f"status {fields['status']!r} is not open | done")
+    if fields.get("status") not in (None, "", *allowed_statuses):
+        issue("status", f"status {fields['status']!r} is not {' | '.join(allowed_statuses)}")
     body = m.group(2)
     if "## Ask" not in body and "## Answer" not in body and "## Note" not in body:
         issue("body", "no '## Ask' or '## Answer' section", "warning")
@@ -730,6 +895,9 @@ def read_message(path, root):
             break
     msg = {"file": rel, **{k: fields.get(k) for k in ("id", "from", "to", "re", "type", "status",
                                                        "acknowledged")}, "summary": summary[:140]}
+    for k in ("claimed_by", "claimed_at"):
+        if k in fields:
+            msg[k] = fields[k]
     if fm:
         msg["_stamp"] = fm.group(1)
     return msg, issues
@@ -743,11 +911,29 @@ def now_in(tz_name):
         return datetime.now()
 
 
+def stale_claim(msg, now, hours=STALE_HOURS):
+    """Why an in_progress claim looks stale (old, missing or unparseable claimed_at), else None."""
+    if msg.get("status") != "in_progress":
+        return None
+    raw = (msg.get("claimed_at") or "").strip()
+    if not raw or raw.lower() == "none":
+        return "claimed_at missing"
+    try:
+        at = datetime.fromisoformat(raw)
+    except ValueError:
+        return f"claimed_at {raw!r} is not ISO 8601"
+    if at.tzinfo is not None:
+        at = at.astimezone(now.tzinfo).replace(tzinfo=None) if now.tzinfo else at.replace(tzinfo=None)
+    age = (now.replace(tzinfo=None) - at).total_seconds() / 3600
+    return f"claimed {age:.1f} h ago (> {hours:g} h)" if age > hours else None
+
+
 def scan(root, cfg):
     comms = root / "comms"
     gated = cfg.get("gated_party")
     parties = cfg["parties"]
     now = now_in(cfg["harness-comms"]["timezone"])
+    claim = claiming(cfg)
     issues, inboxes = [], {}
     for d in sorted(x for x in comms.glob("to_*") if x.is_dir()):
         party = d.name[3:]
@@ -756,7 +942,9 @@ def scan(root, cfg):
                            "message": f"{party!r} is not in config.json parties"})
         msgs = []
         for f in sorted(d.glob("*.md")):
-            msg, f_issues = read_message(f, root)
+            if f.name == "README.md":  # a folder note, not a message
+                continue
+            msg, f_issues = read_message(f, root, statuses(cfg))
             issues += f_issues
             if not msg:
                 continue
@@ -773,6 +961,16 @@ def scan(root, cfg):
             if party != gated and msg["acknowledged"] is not None:
                 issues.append({"file": rel, "rule": "acknowledged_field", "severity": "warning",
                                "message": "only messages to the gated party carry 'acknowledged'"})
+            has_claim = "claimed_by" in msg or "claimed_at" in msg
+            if claim and msg["type"] == "request" and not ("claimed_by" in msg and "claimed_at" in msg):
+                issues.append({"file": rel, "rule": "claim_fields", "severity": "warning",
+                               "message": "requests carry 'claimed_by' and 'claimed_at' (none until claimed)"})
+            if claim and msg["type"] in ("answer", "note") and has_claim:
+                issues.append({"file": rel, "rule": "claim_fields", "severity": "warning",
+                               "message": "only requests carry 'claimed_by' and 'claimed_at'"})
+            if claim and msg["status"] == "in_progress" and (msg.get("claimed_by") or "none") == "none":
+                issues.append({"file": rel, "rule": "claim_fields", "severity": "error",
+                               "message": "status: in_progress needs claimed_by and claimed_at"})
             stamp = msg.pop("_stamp", None)
             if stamp:
                 try:
@@ -820,8 +1018,12 @@ def cmd_init(args):
         "timezone": args.timezone or detect_timezone(),
         "harnesses": dict(parties),
         "routing": load_json(args.routing_json) or {},
-        "hard_rules": load_json(args.hard_rules_json) or list(DEFAULT_RULES),
+        "hard_rules": load_json(args.hard_rules_json) or [
+            r.replace("the two edits", "the edits") if args.claiming else r for r in DEFAULT_RULES],
         "ownership": load_json(args.ownership_json) or [],
+        "claiming": args.claiming,
+        "extra_fields": load_json(args.extra_fields_json) or [],
+        "pre_archive_steps": load_json(args.pre_archive_steps_json) or [],
     }
     check_config(cfg)
     report, code = apply(cfg, root, args.on_conflict, args.dry_run, config_json(cfg))
@@ -893,9 +1095,18 @@ def cmd_status(args):
     gated = cfg.get("gated_party")
     inboxes, archived, _ = scan(root, cfg)
     out = {}
+    now = now_in(cfg["harness-comms"]["timezone"])
     for party, msgs in inboxes.items():
+        claims = {}
+        if claiming(cfg):
+            stale = [{"file": m["file"], "claimed_by": m.get("claimed_by"), "why": why}
+                     for m in msgs if (why := stale_claim(m, now))]
+            claims = {"in_progress": sum(m["status"] == "in_progress" for m in msgs),
+                      "blocked": sum(m["status"] == "blocked" for m in msgs),
+                      "stale_claims": stale}
         out[f"to_{party}"] = {
             "open": sum(m["status"] == "open" for m in msgs),
+            **claims,
             "done_not_swept": sum(m["status"] == "done" for m in msgs),
             "unacknowledged": sum((m["acknowledged"] or "").lower() == "false" for m in msgs)
             if party == gated else None,
@@ -939,6 +1150,12 @@ def main():
     p.add_argument("--routing-json", help="JSON or file: {party: {good_for, not_for, title, reach}}")
     p.add_argument("--ownership-json", help="JSON or file: [{path, owner}] (off by default)")
     p.add_argument("--hard-rules-json", help="JSON or file: [rule, ...] replacing the defaults")
+    p.add_argument("--claiming", action=argparse.BooleanOptionalAction, default=True,
+                   help="requests are claimed before work (open | in_progress | blocked | done); on by default")
+    p.add_argument("--extra-fields-json",
+                   help='JSON or file: [{"name": "repo", "help": "..."}], extra header fields for this project')
+    p.add_argument("--pre-archive-steps-json",
+                   help="JSON or file: [step, ...], done before a request is set to done and archived")
     p.set_defaults(fn=cmd_init)
 
     p = sub.add_parser("add-party", help="add a party to an existing comms/")
