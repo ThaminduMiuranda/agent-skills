@@ -29,6 +29,13 @@ claim a request before working on it, and no agent archives another's unread mai
 **What you get:** a `comms/` folder, a `check-comms` skill for each harness, and an uploadable skill
 for claude.ai. &nbsp;→ [Docs](docs/harness-comms.md) · [Protocol](skills/harness-comms/references/protocol.md)
 
+### 💬 [`check-comms`](plugins/check-comms/README.md) (claude.ai plugin)
+
+The chat side of `harness-comms`, packaged as a claude.ai plugin. Install it once and `/check-comms:check`
+finds every `comms/` project on the linked computer, checks the chat inbox, acknowledges what it read and
+reports what is waiting on whom. Use it instead of uploading a generated chat skill per project.
+&nbsp;→ [Docs and build steps](plugins/check-comms/README.md)
+
 > More skills are on the way. Each one lives in `skills/<name>/` and installs on its own.
 
 ## Quick start

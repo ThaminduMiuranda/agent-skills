@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **`check-comms` claude.ai plugin** (`plugins/check-comms/`): the chat side of `harness-comms` as one
+  installable plugin. `/check-comms:check [project]` discovers `comms/` projects on the linked computer,
+  so chat no longer needs a generated skill per project.
+
 ## v0.2.0
 
 `harness-comms`:
