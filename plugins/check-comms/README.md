@@ -4,17 +4,23 @@ Chat-side check-in for file-based `comms/` folders shared between claude.ai chat
 as set up by [harness-comms](../../docs/harness-comms.md) or the older protocol it grew out of.
 
 It is the claude.ai counterpart of harness-comms: the check-in of the gated party. Install it once and the chat can check every
-harness-comms project on the linked computer, instead of uploading one generated `check-comms-<project>` skill per project.
+harness-comms project on the linked computer, and add or remove projects without a rebuild, instead of uploading one generated `check-comms-<project>` skill per project.
 
 ## Commands
 | Command | What it does |
 |---|---|
 | `/check-comms:check [project]` | Check one project (name, nickname or path), or every discovered project when empty |
+| `/check-comms:add-project path [nickname]` | Register a project in the registry on the linked computer, report its comms state |
+| `/check-comms:remove-project project [reason]` | Unregister a project and hide it from discovery. Never touches the project's files |
 
 ## How projects are found
 At run time, in the folders connected to the linked computer: any `comms/README.md` up to 3 levels deep. A `comms/config.json`
-(harness-comms) gives the project name. `skills/check/references/projects.md` only adds nicknames and fallback paths.
-Adding a project needs no rebuild: run harness-comms `init` in a connected folder. Only new shortcut commands need a rebuild.
+(harness-comms) gives the project name. Your own list lives on the linked computer, because the installed plugin is read-only:
+`check-comms-registry.md` at the root of a connected folder or one of its direct subfolders, with a Projects table (nicknames, extra
+paths) and an Ignored table (folders discovery skips). add-project and remove-project manage it, and it is safe to edit by hand.
+Format: `skills/check/references/registry.md`. `skills/check/references/projects.md` is only a built-in fallback.
+Adding a project needs no rebuild: run harness-comms `init` in a connected folder, or `/check-comms:add-project`. Only new shortcut
+commands need a rebuild.
 
 ## Requirements
 The chat must be linked to the computer that holds the projects (Claude app open and online, listed under Local devices), with
@@ -47,11 +53,12 @@ description: This skill should be used when the user runs /check-comms:myproject
 # check-comms: myproject
 
 1. With the Read tool (plugin files are local, not on the linked computer), read `${CLAUDE_PLUGIN_ROOT}/skills/check/SKILL.md` and `${CLAUDE_PLUGIN_ROOT}/skills/check/references/routine.md`.
-2. Follow them with the project resolved to the `myproject` nickname from `${CLAUDE_PLUGIN_ROOT}/skills/check/references/projects.md`. Skip discovery unless that path is unreachable.
+2. Follow them with the project resolved to the `myproject` nickname (from the registry on the linked computer, or from `${CLAUDE_PLUGIN_ROOT}/skills/check/references/projects.md`). Skip discovery unless that path is unreachable.
 3. Report as the check skill describes, one section headed `myproject`.
 ```
 
-Add a matching `myproject` row to `projects.md`. Each shortcut means rebuilding and reinstalling the plugin, while
+The nickname can come from your registry (`/check-comms:add-project /path/to/myproject myproject`) or from a `projects.md` row.
+Each shortcut means rebuilding and reinstalling the plugin, while
 `/check-comms:check myproject` works without either.
 
 ## Notes for editing

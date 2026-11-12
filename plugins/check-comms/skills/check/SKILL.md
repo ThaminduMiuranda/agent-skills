@@ -18,7 +18,8 @@ Argument handling:
 - **Name or nickname**: match it, case-insensitive and ignoring `-`, `_` and spaces, against
   (a) the `harness-comms.project` value in each discovered `comms/config.json`,
   (b) the discovered project folder name,
-  (c) the nicknames in `${CLAUDE_PLUGIN_ROOT}/skills/check/references/projects.md`.
+  (c) the nicknames in the user's registry on the linked computer (see `${CLAUDE_PLUGIN_ROOT}/skills/check/references/registry.md`),
+  (d) the nicknames in `${CLAUDE_PLUGIN_ROOT}/skills/check/references/projects.md` (built-in fallback).
   One match: use it. Several: list them and ask. None: list the discovered projects and ask.
 - **Empty**: check every discovered project, one report section each.
 
@@ -29,7 +30,8 @@ Discovery (only when the argument is not an absolute path, or to list candidates
    `__pycache__`, `data`, `papers`, `out`, `work`, `Datasets`, `archive`). Never stage files just to discover.
 3. A folder whose `comms/` holds `config.json` is a harness-comms project: its key is `harness-comms.project` from that file
    (stage it, it is small). A `comms/` with only `README.md` is an older-protocol project: its key is the parent folder name.
-4. Add any path from `projects.md` that discovery did not reach.
+4. Read the registry (`references/registry.md` says where and how). Add its Projects rows that discovery did not reach, and drop
+   every discovered project whose comms folder is listed under Ignored. Then add any `projects.md` path still missing.
 If the linked computer cannot be reached, say so plainly (asleep, offline, or the Claude app closed) and stop.
 
 ## 2. Run the routine
@@ -41,4 +43,6 @@ and wins over the routine wherever they differ (header fields, statuses, claimin
 
 One section per project, headed with its key: what is new, what was acknowledged, what is open / in progress (with claimant and
 age) / blocked / stale, and who it waits on (a named agent or the user). State only, not the steps taken. Keep it short.
+If discovery found a comms folder that is neither registered nor ignored, list it once at the end with "add it with
+/check-comms:add-project or hide it with /check-comms:remove-project".
 No middle dot separators, no en or em dashes.

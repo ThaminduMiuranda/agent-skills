@@ -1,7 +1,7 @@
 {
   "name": "check-comms",
-  "version": "0.1.0",
-  "description": "Chat-side check-in for file-based comms/ folders shared with Claude Code, Antigravity and other harnesses. Finds projects automatically on the linked computer.",
+  "version": "0.2.1",
+  "description": "Chat-side check-in for file-based comms/ folders shared with Claude Code, Antigravity and other harnesses. Finds projects automatically, and adds or removes projects from a registry on the linked computer.",
   "author": {
     "name": "Thamindu Hemachandra"
   },
