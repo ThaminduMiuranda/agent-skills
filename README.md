@@ -18,8 +18,8 @@
 ### 🔗 [`harness-comms`](docs/harness-comms.md)
 
 Lets a claude.ai chat and your local coding agents work on one project together through a shared
-file-based mailbox, `comms/`. Messages carry real timestamps, chat acknowledges what it reads, and no
-agent archives another's unread mail.
+file-based mailbox, `comms/`. Messages carry real timestamps, chat acknowledges what it reads, agents
+claim a request before working on it, and no agent archives another's unread mail.
 
 **Use when**
 - you plan in a claude.ai chat but build with Claude Code, Codex or Antigravity
@@ -89,8 +89,8 @@ mkdir -p "$DEST" && curl -sL https://github.com/ThaminduMiuranda/agent-skills/ar
   | tar -xz -C "$DEST" --strip-components=2 "agent-skills-main/skills/$SKILL"
 ```
 
-To pin a version, replace `refs/heads/main` with `refs/tags/v0.1.0` and `agent-skills-main` with
-`agent-skills-0.1.0`.
+To pin a version, replace `refs/heads/main` with `refs/tags/v0.2.0` and `agent-skills-main` with
+`agent-skills-0.2.0`. Changes per version are in the [changelog](CHANGELOG.md).
 
 </details>
 

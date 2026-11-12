@@ -32,7 +32,11 @@ A single command creates:
   instructions, so the chat can check its inbox, acknowledge what it has read, and send requests
 
 Messages to the chat are archived only after the chat has acknowledged reading them, and each agent
-archives only its own inbox, so nobody's unread mail disappears. The skill can also add a harness
+archives only its own inbox, so nobody's unread mail disappears. Requests are claimed before work
+(`open → in_progress → done`, or `blocked` while they wait on you), so two sessions never start the
+same task, and claims left behind for more than 12 hours are reported. A project can add its own
+header fields (for example `repo`), steps every agent does before closing a request, and a notes
+section in `comms/README.md` that regeneration keeps. The skill can also add a harness
 later, re-generate everything from `comms/config.json`, and audit headers and inbox state.
 
 ## Which chat apps can join

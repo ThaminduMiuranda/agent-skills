@@ -32,6 +32,14 @@ reads skills and instructions, and how claude.ai joins.
      as a message is `status: done`, but the gated inbox is archived only after that party has actually
      read the message.
    - **Timezone.** Defaults to this machine's. File names carry real local time.
+   - **Claiming.** On by default. Requests are claimed (`status: in_progress`, `claimed_by`,
+     `claimed_at`) before work, can be `blocked` on the user, and stale claims are reported. Explain
+     why: two sessions checking one inbox at once would otherwise both start the same request. Turn it
+     off with `--no-claiming` only if the user wants the plain `open | done` protocol.
+   - **Project extensions (optional).** Extra header fields (`--extra-fields-json`, for example
+     `[{"name": "repo", "help": "repo the work happens in"}]`) and steps every party does before
+     closing a request (`--pre-archive-steps-json`, for example filing the outcome in a wiki). Ask
+     only if the project already shows such a convention.
    - **Routing and ownership (optional).** Each harness comes with default "good for / not for" rows.
      Offer to adjust them (`--routing-json`). Add a file-ownership table (`--ownership-json`) only if
      the user wants one.
@@ -65,12 +73,15 @@ reads skills and instructions, and how claude.ai joins.
 
 - **Add a harness:** `add-party --party codex` (or `--party ui:antigravity`). This also works on an
   older `comms/` that has no `config.json`; it infers the parties from the `to_*` folders.
-- **Edit routing, rules, timezone or ownership:** edit `comms/config.json` (the source of truth),
-  then run `sync`. Generated files carry a `harness-comms: generated file` marker line. Deleting that
-  line makes the file yours, and `sync` will no longer overwrite it without asking.
+- **Edit routing, rules, timezone, ownership, claiming or extensions:** edit `comms/config.json` (the
+  source of truth), then run `sync`. Generated files carry a `harness-comms: generated file` marker line. Deleting that
+  line makes the file yours, and `sync` will no longer overwrite it without asking. To keep
+  project-specific text in the generated `comms/README.md` without owning it, put it between
+  `<!-- harness-comms:project-notes:start -->` and `<!-- harness-comms:project-notes:end -->`.
 - **Audit:** `validate` checks file names, headers, `to:` matching the inbox, the `acknowledged` field
-  on gated messages, and timestamps in the future (a sign that one was guessed). `status` counts open,
-  unacknowledged and sweep-ready messages for each inbox.
+  on gated messages, claim fields when claiming is on, and timestamps in the future (a sign that one
+  was guessed). `status` counts open, claimed, blocked, stale, unacknowledged and sweep-ready
+  messages for each inbox.
 
 ## Day-to-day
 
@@ -87,5 +98,6 @@ mail.
 - Leaving out the claude.ai steps at hand-off. Without the uploaded skill and file access, chat cannot
   join.
 - Guessing timestamps, or naming message files by hand when `new_message.py` is available.
+- Resetting another party's claim. Stale claims are reported for the user to decide on.
 - Running `archive_sweep.py` without `--as`. That sweeps every non-gated inbox, including messages
   their owners have not read yet.
