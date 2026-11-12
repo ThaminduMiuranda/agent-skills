@@ -44,6 +44,10 @@ To set it up, the user does three things, all listed in `comms/_chat/README.md`:
    skill has the project's name in it.
 3. Paste the instruction block into the claude.ai project's instructions.
 
+Instead of step 2, chat can install the `check-comms` plugin from this repo
+(`plugins/check-comms/`) once. Its `/check-comms:check [project]` command finds every project with a
+`comms/README.md` in the linked computer's connected folders, so a new project needs no upload.
+
 The `harness-comms` skill itself is meant for local harnesses: its script has to run on the machine
 that holds the project. Uploading it to claude.ai lets chat read the protocol, but not scaffold
 anything.

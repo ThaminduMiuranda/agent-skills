@@ -1,0 +1,16 @@
+{
+  "name": "check-comms",
+  "version": "0.2.2",
+  "description": "Chat-side check-in for file-based comms/ folders shared with Claude Code, Antigravity and other harnesses. Finds projects automatically, and adds or removes projects from a registry on the linked computer.",
+  "author": {
+    "name": "Thamindu Hemachandra"
+  },
+  "repository": "https://github.com/ThaminduMiuranda/agent-skills",
+  "license": "MIT",
+  "keywords": [
+    "comms",
+    "multi-agent",
+    "harness-comms",
+    "coordination"
+  ]
+}

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- **`check-comms` claude.ai plugin** (`plugins/check-comms/`): the chat side of `harness-comms` as one
+  installable plugin. `/check-comms:check [project]` discovers `comms/` projects on the linked computer,
+  so chat no longer needs a generated skill per project.
+- `check-comms` plugin v0.2.1: `/check-comms:add-project` and `/check-comms:remove-project`, and an on-computer
+  registry (`check-comms-registry.md` at a connected folder root or one of its direct subfolders) with Projects and
+  Ignored tables. The check skill reads it and lists discovered folders that are neither registered nor ignored.
+- `check-comms` plugin v0.2.2: registry paths are relative to the registry file's folder, so a registry can be
+  committed and shared across machines and OSes. Absolute paths from older registries are still read, new rows are
+  always written relative, and a row missing on this computer is reported once and skipped.
+
 ## v0.2.0
 
 `harness-comms`:

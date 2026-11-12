@@ -79,6 +79,9 @@ Notes:
    - upload `comms/_chat/check-comms-<project>.zip` under claude.ai → Settings → Capabilities → Skills
    - paste the project-instructions block into the claude.ai project
 
+   Or install the [`check-comms` plugin](../plugins/check-comms/README.md) once instead of uploading a
+   chat skill per project: `/check-comms:check` finds every `comms/` project on the linked computer.
+
 Chat apps don't need `harness-comms` itself installed, because its script has to run on the machine
 that holds the project. To upload it to a chat app anyway (for example, so the chat can read the
 protocol), `python3 install.py --zip --skill harness-comms` builds `dist/harness-comms.zip`.
